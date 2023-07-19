@@ -1,0 +1,110 @@
+## set the hostname
+
+- name: set hostname
+  hostname:
+    name: '{{ hostname }}'
+
+## disable auto-upgrades
+
+- name: disable auto upgrades 1 of 2
+  lineinfile:
+    path: /etc/apt/apt.conf.d/20auto-upgrades
+    regexp: '^APT::Periodic::Update-Package-Lists'
+    line: 'APT::Periodic::Update-Package-Lists "0";'
+
+- name: disable auto upgrades 2 of 2
+  lineinfile:
+    path: /etc/apt/apt.conf.d/20auto-upgrades
+    regexp: '^APT::Periodic::Unattended-Upgrade'
+    line: 'APT::Periodic::Unattended-Upgrade "0";'
+
+## faster ssh logins
+
+- name: faster ssh logins
+  replace:
+    path: /etc/pam.d/sshd
+    regexp: '^([^#].*? pam_motd.so .*)$'
+    replace: '#\1'
+
+## install packages
+
+- name: update package cache
+  apt:
+    update_cache: true
+    cache_valid_time: 43200
+
+- name: install https transport
+  apt:
+    name: apt-transport-https
+    state: present
+
+- name: install useful packages
+  apt:
+    pkg:
+    - net-tools
+    - dnsutils
+    - traceroute
+    - tcpdump
+    - rfkill
+    state: present
+
+## disable swap
+
+- name: disable swap
+  replace:
+    path: /etc/fstab
+    regexp: '^([^#].*? swap .*)$'
+    replace: '#\1'
+  notify:
+    - reboot system
+
+## enable memory cgroups
+
+- name: enable memory cgroups
+  replace:
+    path: /boot/firmware/cmdline.txt
+    regexp: '^(.*?)( cgroup_enable=memory cgroup_memory=1)*$'
+    replace: '\1 cgroup_enable=memory cgroup_memory=1'
+  notify:
+    - reboot system
+
+## enable kernel modules
+
+- name: install kernel modules
+  copy:
+    src: kube-modules.conf
+    dest: /etc/modules-load.d/kube-modules.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - reboot system  
+
+## setup forwarding and bridges
+
+- name: enable packet forwarding
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: 1
+
+- name: enable bridge-nf-call-ip6tables
+  sysctl:
+    name: net.bridge.bridge-nf-call-ip6tables
+    value: 1
+    reload: no
+  notify:
+    - reboot system
+
+- name: enable bridge-nf-call-iptables
+  sysctl:
+    name: net.bridge.bridge-nf-call-iptables
+    value: 1
+    reload: no
+  notify:
+    - reboot system
+
+## reboot the system
+
+- name: flush handlers
+  meta: flush_handlers
+

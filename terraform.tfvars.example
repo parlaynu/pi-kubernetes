@@ -1,0 +1,46 @@
+cluster {
+  cluster_vip = "X.X.X.A/Z"
+  pod_cidr_block = "Y.Y.Y.Y/Z"
+}
+
+
+controller = {
+    name = "controller01"
+    ip_address = "X.X.X.B"
+    username = "ubuntu"
+    ssh_keyfile = "~/.ssh/id_rsa"
+    priority = 127
+}
+
+
+secondary = {
+  controller02 = {
+    ip_address = "X.X.X.C"
+    username = "ubuntu"
+    ssh_keyfile = "~/.ssh/id_rsa"
+    priority = 126
+  },
+  controller03 = {
+    ip_address = "X.X.X.D"
+    username = "ubuntu"
+    ssh_keyfile = "~/.ssh/id_rsa"
+    priority = 125
+  }
+}
+
+
+workers = {
+  worker01 = {
+    ip_address = "X.X.X.E"
+    username = "ubuntu"
+    ssh_keyfile = "~/.ssh/id_rsa"
+  },
+  worker02 = {
+    ip_address = "X.X.X.F"
+    username = "ubuntu"
+    ssh_keyfile = "~/.ssh/id_rsa"
+  }
+}
+
+
+

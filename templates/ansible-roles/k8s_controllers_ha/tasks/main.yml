@@ -1,0 +1,31 @@
+- name: install keepalived
+  apt:
+    name: keepalived
+    state: present
+
+- name: install keepalived check script
+  template:
+    src: check_backend.sh
+    dest: /etc/keepalived/check_backend.sh
+    mode: 0755
+  notify:
+    - restart keepalived
+
+- name: install keepalived configuration
+  template:
+    src: keepalived.conf
+    dest: /etc/keepalived/keepalived.conf
+  notify:
+    - restart keepalived
+
+- name: install haproxy
+  apt:
+    name: haproxy
+    state: present
+
+- name: install haproxy configuration
+  template:
+    src: haproxy.cfg
+    dest: /etc/haproxy/haproxy.cfg
+  notify:
+    - restart haproxy

@@ -1,0 +1,27 @@
+- name: controller join command
+  debug:
+    msg: "{{ hostvars[item].join_command }} --control-plane --certificate-key {{ hostvars[item].certificate_key }}"
+  with_inventory_hostnames:
+    - controller
+
+- name: join cluster as controller
+  shell:
+    cmd: "{{ hostvars[item].join_command }} --control-plane --certificate-key {{ hostvars[item].certificate_key }} > controller_join.txt"
+    chdir: $HOME
+    creates: controller_join.txt
+  with_inventory_hostnames:
+    - controller
+
+- name: create kubectl directory
+  file:
+    path: $HOME/.kube
+    state: directory
+    mode: 0750
+
+- name: copy kube config
+  copy:
+    remote_src: true
+    src: /etc/kubernetes/admin.conf
+    dest: $HOME/.kube/config
+    mode: 0640
+

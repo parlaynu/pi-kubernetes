@@ -1,0 +1,99 @@
+- name: install keepalived
+  apt:
+    name: keepalived
+    state: present
+
+- name: install keepalived configuration for virtual ip
+  template:
+    src: keepalived.conf
+    dest: /etc/keepalived/keepalived.conf
+    force: false
+  notify:
+    - restart keepalived
+    
+- name: install haproxy
+  apt:
+    name: haproxy
+    state: present
+
+- name: install haproxy configuration
+  template:
+    src: haproxy.cfg
+    dest: /etc/haproxy/haproxy.cfg
+  notify:
+    - restart haproxy
+
+- name: restart services if needed
+  meta: flush_handlers
+
+- name: initialize control plane
+  shell:
+    cmd: kubeadm init --pod-network-cidr ${pod_cidr_block} --control-plane-endpoint "${cluster_vip}:443" > controller_init.txt
+    chdir: $HOME
+    creates: controller_init.txt
+
+- name: upload certificates
+  shell:
+    cmd: kubeadm init phase upload-certs --upload-certs
+  register: certificate_key_raw
+    
+- name: save certificate key
+  set_fact:
+    certificate_key: "{{ certificate_key_raw.stdout_lines[-1] }}"
+
+- name: create kubectl directory
+  file:
+    path: $HOME/.kube
+    state: directory
+    mode: 0750
+
+- name: copy kube config
+  copy:
+    remote_src: true
+    src: /etc/kubernetes/admin.conf
+    dest: $HOME/.kube/config
+    mode: 0640
+
+- name: download calico manifest
+  get_url:
+    url: https://projectcalico.docs.tigera.io/manifests/calico.yaml
+    dest: $HOME/calico.yaml
+
+- name: configure calico networking - 1 of 2
+  replace:
+    path: $HOME/calico.yaml
+    regexp: '(# )(- name: CALICO_IPV4POOL_CIDR)'
+    replace: '\2'
+
+- name: configure calico networking - 2 of 2
+  replace:
+    path: $HOME/calico.yaml
+    regexp: '(# )(  value: "192.168.0.0/16")'
+    replace: '  value: "${pod_cidr_block}"'
+
+- name: apply calico config
+  shell:
+    cmd: kubectl apply -f calico.yaml > calico_init.txt
+    chdir: $HOME
+    creates: calico_init.txt
+
+- name: get join command
+  shell: kubeadm token create --print-join-command
+  register: join_command_raw
+
+- name: save join command
+  set_fact:
+    join_command: "{{ join_command_raw.stdout_lines[0] }}"
+
+- name: certificate key
+  debug:
+    msg: "{{ hostvars[item].certificate_key }}"
+  with_inventory_hostnames:
+    - controller
+
+- name: join command
+  debug:
+    msg: "{{ hostvars[item].join_command }}"
+  with_inventory_hostnames:
+    - controller
+

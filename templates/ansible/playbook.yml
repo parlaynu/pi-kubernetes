@@ -1,0 +1,78 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: no
+
+  vars:
+    ansible_python_interpreter: "/usr/bin/env python3"
+
+  tasks:
+  - import_role:
+      name: ${system_role}
+
+  - import_role:
+      name: ${containerd_role}
+
+  - import_role:
+      name: ${kubernetes_role}
+
+
+- hosts: controller
+  become: yes
+  gather_facts: no
+
+  vars:
+    ansible_python_interpreter: "/usr/bin/env python3"
+
+  tasks:
+  - import_role:
+      name: ${k8s_controller_role}
+
+
+- hosts: secondary
+  become: yes
+  gather_facts: no
+
+  vars:
+    ansible_python_interpreter: "/usr/bin/env python3"
+
+  tasks:
+  - import_role:
+      name: ${k8s_secondary_role}
+
+
+- hosts: controllers
+  become: yes
+  gather_facts: no
+
+  vars:
+    ansible_python_interpreter: "/usr/bin/env python3"
+
+  tasks:
+  - import_role:
+      name: ${k8s_controllers_ha_role}
+
+
+- hosts: workers
+  become: yes
+  gather_facts: no
+
+  vars:
+    ansible_python_interpreter: "/usr/bin/env python3"
+
+  tasks:
+  - import_role:
+      name: ${k8s_worker_role}
+
+
+- hosts: controller
+  become: yes
+  gather_facts: no
+
+  vars:
+    ansible_python_interpreter: "/usr/bin/env python3"
+
+  tasks:
+  - import_role:
+      name: ${k8s_dashboard_role}
+

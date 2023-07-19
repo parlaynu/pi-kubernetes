@@ -1,0 +1,22 @@
+- name: apply dashboard config
+  shell:
+    cmd: kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml > dashboard_basic.txt
+    chdir: $HOME
+    creates: dashboard_basic.txt
+
+- name: check for admin-user
+  shell:
+    cmd: kubectl -n kubernetes-dashboard get serviceaccount admin-user
+  register: user_status
+  ignore_errors: true
+
+- name: create admin-user
+  shell:
+    cmd: kubectl -n kubernetes-dashboard create serviceaccount admin-user
+  when: user_status.rc != 0
+
+- name: create admin-user role binding
+  shell:
+    cmd: kubectl create clusterrolebinding admin-user --clusterrole=cluster-admin --serviceaccount=kubernetes-dashboard:admin-user
+  when: user_status.rc != 0
+

@@ -1,0 +1,12 @@
+---
+hostname: ${hostname}
+ip_address: ${ip_address}
+
+vrrp_role: ${vrrp_role}
+priority: ${priority}
+
+controllers:
+- ${primary.ip_address}
+%{ for key, value in secondary ~}
+- ${value.ip_address}
+%{ endfor ~}

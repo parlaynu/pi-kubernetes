@@ -1,0 +1,15 @@
+- name: worker join command
+  debug:
+    msg: "{{ hostvars[item].join_command }}"
+  with_inventory_hostnames:
+    - controller
+
+- name: join cluster
+  shell:
+    cmd: "{{ hostvars[item].join_command }} > node_joined.txt"
+    chdir: $HOME
+    creates: node_joined.txt
+  with_inventory_hostnames:
+    - controller
+
+
